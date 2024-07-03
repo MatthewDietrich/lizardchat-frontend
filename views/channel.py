@@ -126,7 +126,7 @@ class UserList(ft.ListView):
         for nick in nicks:
             if nick:
                 self.nicks.append(nick)
-        self.nicks = sorted(self.nicks, key=lambda s: s.casefold())
+        self.nicks = sorted(set(self.nicks), key=lambda s: s.casefold())
         self.controls = [self.title_text]
         for nick in self.nicks:
             self.controls.append(NickBox(nick))
