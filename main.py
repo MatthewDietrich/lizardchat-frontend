@@ -8,6 +8,7 @@ def main(page: ft.Page) -> None:
     page.title = "IRC Client"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.fonts = {"Cousine": "/fonts/Cousine-Regular.ttf"}
 
     home_view = HomeView()
     channel_view = ChannelView("#main_chat")
@@ -24,4 +25,4 @@ def main(page: ft.Page) -> None:
     page.go("/channel")
 
 
-ft.app(target=main)
+ft.app(target=main, assets_dir="assets")

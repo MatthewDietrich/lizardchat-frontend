@@ -33,7 +33,7 @@ class HomeView(ft.View):
         self.controls = [
             ft.AppBar(
                 title=ft.Row(
-                    [ft.Text("Login"), ft.Image("images/lizard_icon_small.png")]
+                    [ft.Text("Login"), ft.Image("/images/lizard_icon_small.png")]
                 ),
                 bgcolor=CustomColors.NAVY,
             ),

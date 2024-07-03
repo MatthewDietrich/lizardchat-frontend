@@ -17,7 +17,7 @@ class ChannelView(ft.View):
         self.controls = [
             ft.AppBar(
                 title=ft.Row(
-                    [ft.Text(channel), ft.Image("images/lizard_icon_small.png")]
+                    [ft.Text(channel), ft.Image("/images/lizard_icon_small.png")]
                 ),
                 bgcolor=CustomColors.NAVY,
             ),
@@ -146,8 +146,11 @@ class ChatMessage(ft.Row):
         self.message = message
         self.vertical_alignment = ft.MainAxisAlignment.START
         self.alignment = ft.CrossAxisAlignment.START
+        self.spacing = 5
         self.controls = [
             ft.Text(value=timestamp, size=10),
-            ft.Text(value=f"{nickname}: ", weight=ft.FontWeight.BOLD),
-            ft.Text(value=message, selectable=True),
+            ft.Text(
+                value=f"{nickname}:", weight=ft.FontWeight.BOLD, font_family="Cousine"
+            ),
+            ft.Text(value=message, selectable=True, font_family="Cousine"),
         ]
