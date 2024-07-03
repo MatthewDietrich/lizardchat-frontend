@@ -99,19 +99,37 @@ class ChatOutput(ft.ListView):
         self.controls.append(ChatMessage(timestamp, nick, message))
 
 
-class UserList(ft.Text):
+class NickBox(ft.Container):
+    def __init__(self, nick: str) -> None:
+        super().__init__()
+        self.bgcolor = CustomColors.BLACK
+        self.content = ft.Text(value=nick)
+        self.on_hover = self.hover
+
+    def hover(self, e: ft.HoverEvent) -> None:
+        if e.data == "true":
+            self.bgcolor = CustomColors.NAVY
+        else:
+            self.bgcolor = CustomColors.BLACK
+        self.page.update()
+
+
+class UserList(ft.ListView):
     def __init__(self) -> None:
         super().__init__()
-        self.nicks: list[str] = []
-        self.spans: list[ft.TextSpan] = []
-        self.text_align = ft.CrossAxisAlignment.START
+        self.nicks = []
+        self.padding = 10
+        self.title_text = ft.Text(value="Users", weight=ft.FontWeight.BOLD)
+        self.controls = [self.title_text]
 
     def add_nicks(self, nicks: list[str]) -> None:
         for nick in nicks:
             if nick:
                 self.nicks.append(nick)
         self.nicks = sorted(self.nicks, key=lambda s: s.casefold())
-        self.spans = [ft.TextSpan(f"{nick}\n") for nick in self.nicks]
+        self.controls = [self.title_text]
+        for nick in self.nicks:
+            self.controls.append(NickBox(nick))
 
 
 class ChatInput(ft.TextField):
