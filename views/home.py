@@ -31,7 +31,12 @@ class HomeView(ft.View):
             disabled=True,
         )
         self.controls = [
-            ft.AppBar(title=ft.Text("Login"), bgcolor=CustomColors.NAVY),
+            ft.AppBar(
+                title=ft.Row(
+                    [ft.Text("Login"), ft.Image("images/lizard_icon_small.png")]
+                ),
+                bgcolor=CustomColors.NAVY,
+            ),
             ft.Text(
                 spans=[
                     ft.TextSpan(text="Welcome to "),

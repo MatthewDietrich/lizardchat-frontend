@@ -15,7 +15,12 @@ class ChannelView(ft.View):
         self.chat_input = ChatInput()
         self.chat_input.on_submit = self.chat_submit
         self.controls = [
-            ft.AppBar(title=ft.Text(channel), bgcolor=CustomColors.NAVY),
+            ft.AppBar(
+                title=ft.Row(
+                    [ft.Text(channel), ft.Image("images/lizard_icon_small.png")]
+                ),
+                bgcolor=CustomColors.NAVY,
+            ),
             ft.ResponsiveRow(
                 controls=[
                     ft.Column(controls=[self.user_list], col={"md": 1}),
