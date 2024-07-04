@@ -2,6 +2,7 @@ import datetime
 
 import flet as ft
 
+from views.viewirc import ViewIrcClient
 from helpers.colors import CustomColors
 
 
@@ -42,8 +43,7 @@ class ChannelView(ft.View):
 
     def did_mount(self) -> None:
         super().did_mount()
-        if self.page.session.get("nickname") is None:
-            print("Warning: nickname not set")
+        self.irc_client = ViewIrcClient(self.page)
         self.login()
         self.user_list.add_nicks(["squam", "beavis", self.page.session.get("nickname")])
         self.page.on_view_pop = lambda _: self.confirm_logout()

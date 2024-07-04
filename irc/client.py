@@ -1,0 +1,143 @@
+import select
+import socket
+from random import randint
+
+
+class IrcUser:
+    def __init__(self, nick: str, username: str, host: str, realname: str = None):
+        self.nick = nick
+        self.username = username
+        self.host = host
+        self.realname = realname
+
+    def __str__(self):
+        return f"<User nick={self.nick} username={self.username}>"
+
+    def __repr__(self):
+        return f"{self.nick}!{self.username}@{self.host}"
+
+    def __bytes__(self):
+        return bytes(repr(self), "utf-8")
+
+    @classmethod
+    def from_raw(cls, raw: str):
+        """Construct a User from raw IRC server user string"""
+        try:
+            nick, remaining = raw.split("!")
+            username, host = remaining.split("@")
+            return cls(nick, username, host)
+        except ValueError as exc:
+            raise ValueError("Invalid user string " + raw) from exc
+
+
+class IrcMessage:
+    def __init__(self, source: str | None, command: str, params: str):
+        self.source = source
+        self.command = command
+        self.params = params
+
+    def __str__(self):
+        return f"<Message source={self.source} command={self.command}>"
+
+    @classmethod
+    def from_raw(cls, raw: str):
+        """Construct a Message object from raw IRC server output"""
+        stripped = raw.strip("\r\n")
+        try:
+            if stripped.startswith("@"):
+                raise NotImplementedError("This client currently does not support tags")
+            elif stripped.startswith(":"):
+                src, cmd, *params = stripped.split(" ")
+                src = src[1:]
+                try:
+                    src = IrcUser.from_raw(src)
+                except ValueError:
+                    pass
+            else:
+                src = None
+                cmd, *params = stripped.split(" ")
+            return cls(src, cmd, " ".join(params))
+        except ValueError as exc:
+            raise ValueError("Invalid message string " + raw) from exc
+
+
+class IrcBaseClient:
+    def __init__(self, nick: str, username: str, password: str = None) -> None:
+        self.nick = nick
+        self.password = password
+        self.username = username
+        self.socket = None
+        self.connected = False
+
+    def connect(self, hostname: str, port: int = 6667):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((hostname, port))
+        self.socket.settimeout(10)
+
+        if self.password:
+            self.send(IrcMessage(None, "PASS", self.password))
+        self.send(IrcMessage(None, "NICK", self.nick))
+        self.send(IrcMessage(None, "USER", f"{self.nick} 0 * :{self.nick}"))
+
+        while True:
+            message = self.get_message()
+            if message:
+                print(repr(message))
+                match message.command:
+                    case "005":
+                        break
+                    case "433":  # Nickname already in use
+                        self.send(
+                            IrcMessage(None, "NICK", f"{self.nick}_{randint(10, 99)}")
+                        )
+                        break
+
+        self.connected = True
+
+    def send(self, message: IrcMessage) -> None:
+        raw = bytes(message)
+        self.socket.send(raw)
+
+    def get_message(self) -> IrcMessage | None:
+        readable, w, e = select.select([self.socket], [], [], 0)
+        if readable:
+            # Read reply one byte at a time
+            reply = b""
+            while c := self.socket.recv(1):
+                reply = reply + c
+                if c == b"\n":
+                    message = IrcMessage.from_raw(reply.decode("utf-8"))
+                    if message.command == "PING":
+                        self.pong(message.params[1:])
+                        return None
+                    return message
+
+    def get_all_messages(self) -> list[IrcMessage]:
+        messages = []
+        while message := self.get_message():
+            messages.append(message)
+        return messages
+
+    def join(self, channel: str) -> None:
+        self.send(IrcMessage(None, "JOIN", channel))
+
+    def send_private_message(self, to: str, text: str) -> None:
+        self.send(IrcMessage(None, "PRIVMSG", f"{to} {text}"))
+
+    def send_notice(self, message_target: str, text: str) -> None:
+        self.send(IrcMessage(None, "NOTICE", f"{message_target} {text}"))
+
+    def get_names(self, channel: str) -> None:
+        self.send(IrcMessage(None, "NAMES", channel))
+
+    def pong(self, s):
+        self.send(IrcMessage(None, "PONG", s))
+
+    def query_topic(self, channel):
+        self.send(IrcMessage(None, "TOPIC", channel))
+
+    def disconnect(self):
+        self.send(IrcMessage(None, "QUIT", "Disconnecting in a spec compliant way"))
+        self.socket.shutdown(socket.SHUT_RDWR)
+        self.socket.close()
+        self.connected = False

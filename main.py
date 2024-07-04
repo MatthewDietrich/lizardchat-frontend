@@ -5,7 +5,7 @@ from views.home import HomeView
 
 
 def main(page: ft.Page) -> None:
-    page.title = "IRC Client"
+    page.title = "Lizardnet Webchat"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"Cousine": "/fonts/Cousine-Regular.ttf"}
