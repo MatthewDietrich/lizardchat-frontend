@@ -95,7 +95,7 @@ class IrcBaseClient:
         while True:
             message = self.get_message()
             if message:
-                print(repr(message))
+                print(repr(message).strip())
                 match message.command:
                     case "005":
                         break
