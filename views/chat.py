@@ -55,13 +55,20 @@ class ChatView(ft.View):
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
-        if self.chat_input.value:
-            self.irc_client.client.send_private_message(
-                self.chat_output.active_buffer, self.chat_input.value
-            )
-            self.chat_output.add_message(
-                self.page.session.get("nickname"), self.chat_input.value
-            )
+        if input_value := self.chat_input.value:
+            if input_value.startswith("/"):
+                command, *remaining = input_value.split(" ")
+                match command:
+                    case "/join":
+                        if len(remaining) == 1:
+                            self.join(remaining[0])
+            else:
+                self.irc_client.client.send_private_message(
+                    self.chat_output.active_buffer, self.chat_input.value
+                )
+                self.chat_output.add_message(
+                    self.page.session.get("nickname"), self.chat_input.value
+                )
             self.chat_input.value = ""
         self.chat_input.focus()
         self.page.update()
