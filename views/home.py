@@ -66,4 +66,4 @@ class HomeView(ft.View):
         self.page.session.set("password", self.text_password.value)
         self.page.session.set("username", f"lizardchat-web")
         self.page.session.set("realname", f"lizardchat-web")
-        self.page.go("/channel")
+        self.page.go("/chat")

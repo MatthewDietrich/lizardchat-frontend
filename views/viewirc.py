@@ -18,12 +18,12 @@ class ViewMessageHandlers:
     def bounce(self, message: IrcMessage) -> HandlerResponse:
         _, *content = message.params.split(" ")
         content = " ".join(content)
-        return ":server", f"<!> {content}"
+        return "<server>", f"<!> {content}"
 
     def privmsg(self, message: IrcMessage) -> HandlerResponse:
         to, *content = message.params.split(" ")
         content = " ".join(content)[1:]
-        return to, f"< {message.source.nick}> {content}"
+        return to, f"{message.source.nick} {content}"
 
     def join(self, message: IrcMessage) -> HandlerResponse:
         channel = message.params[1:]
@@ -38,23 +38,23 @@ class ViewMessageHandlers:
     def users(self, message: IrcMessage) -> HandlerResponse:
         _, *content = message.params.split(" ")
         content = " ".join(content)
-        return ":server", f"<!> {content[1:]}"
+        return "<server>", f"<!> {content[1:]}"
 
     def motd(self, message: IrcMessage) -> HandlerResponse:
         _, *content = message.params.split(" ")
         content = " ".join(content)
-        return ":server", f"<!> {content[1:]}"
+        return "<server>", f"<!> {content[1:]}"
 
     def namreply(self, message: IrcMessage) -> HandlerResponse:
         _, _, _, *names = message.params.split(" ")
         if names:
             names[0] = names[0][1:]  # remove leading colon from first name
-        # TODO: Update users box in view
+        self.view.user_list.set_nicks(names)
         return "", ""
 
     def end_of_names(self, message: IrcMessage) -> HandlerResponse:
         _, content = message.params.split(":")
-        return ":server", f"<!> {content}"
+        return "<server>", f"<!> {content}"
 
     def topic(self, message: IrcMessage) -> HandlerResponse:
         _, channel, *topic = message.params.split(" ")
@@ -73,7 +73,7 @@ class ViewMessageHandlers:
     def luser(self, message: IrcMessage) -> HandlerResponse:
         _, count, *remaining = message.params.split(" ")
         remaining = " ".join(remaining)
-        return ":server", f"<!> {count} {remaining[1:]}"
+        return "<server>", f"<!> {count} {remaining[1:]}"
 
     def no_topic(message: IrcMessage) -> HandlerResponse:
         # TODO: blank topic in view
@@ -111,6 +111,7 @@ class ViewIrcClient:
             replycodes.RPL_GLOBALUSERS: message_handlers.users,
             replycodes.RPL_MOTD: message_handlers.motd,
             replycodes.RPL_MOTDSTART: message_handlers.motd,
+            replycodes.ERR_NOMOTD: message_handlers.motd,
             replycodes.RPL_ENDOFMOTD: message_handlers.motd,
             replycodes.RPL_NAMREPLY: message_handlers.namreply,
             replycodes.RPL_ENDOFNAMES: message_handlers.end_of_names,
@@ -129,17 +130,18 @@ class ViewIrcClient:
             to, content = handler(message)
         except KeyError:
             print("Unhandled command", repr(message))
-            to = ":server"
+            to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
-            self.view.chat_output.add_message(to, content)
+            self.view.add_message_to_buffer(to, content)
             self.current_buf_changed = True
 
     async def listen(self) -> None:
-        if self.client.connected:
-            self.current_buf_changed = False
-            for message in self.client.get_all_messages():
-                self.handle_message(message)
-        if self.current_buf_changed:
-            self.view.page.update()
-        self.view.page.run_task(self.listen)
+        if self.view.page:
+            if self.client.connected:
+                self.current_buf_changed = False
+                for message in self.client.get_all_messages():
+                    self.handle_message(message)
+            if self.current_buf_changed:
+                self.view.page.update()
+            self.view.page.run_task(self.listen)

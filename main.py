@@ -10,15 +10,12 @@ def main(page: ft.Page) -> None:
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"Cousine": "/fonts/Cousine-Regular.ttf"}
 
-    home_view = HomeView()
-    chat_view = ChatView("#main_chat")
-
     def route_change(e: ft.RouteChangeEvent) -> None:
         page.views.clear()
-        page.views.append(home_view)
+        page.views.append(HomeView())
         match page.route:
             case "/chat":
-                page.views.append(chat_view)
+                page.views.append(ChatView())
         page.update()
 
     page.on_route_change = route_change
