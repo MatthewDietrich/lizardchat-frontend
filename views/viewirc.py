@@ -86,7 +86,7 @@ class ViewMessageHandlers:
         return "", ""
 
 
-class ViewIrcClient(IrcBaseClient):
+class ViewIrcClient:
     def __init__(self, view: ft.View) -> None:
         nick = view.page.session.get("nickname")
         username = view.page.session.get("username")
@@ -95,9 +95,9 @@ class ViewIrcClient(IrcBaseClient):
             print("Warning: nickname not set")
             nick = "asdf"
             username = "lizardchat-web"
-        super().__init__(nick, username, password)
         self.view = view
-        message_handlers = ViewMessageHandlers()
+        self.client = IrcBaseClient(nick, username, password)
+        message_handlers = ViewMessageHandlers(self.client, view)
         self.message_handler_functions = {
             "PRIVMSG": message_handlers.privmsg,
             "JOIN": message_handlers.join,
@@ -121,8 +121,9 @@ class ViewIrcClient(IrcBaseClient):
             replycodes.RPL_LUSERCHANNELS: message_handlers.luser,
             replycodes.RPL_NOTOPIC: message_handlers.no_topic,
         }
+        self.current_buf_changed = False
 
-    def handle(self, message: IrcMessage) -> None:
+    def handle_message(self, message: IrcMessage) -> None:
         try:
             handler = self.message_handler_functions[message.command]
             to, content = handler(message)
@@ -130,5 +131,15 @@ class ViewIrcClient(IrcBaseClient):
             print("Unhandled command", repr(message))
             to = ":server"
             content = f"<!> {message.command} {message.params}"
-        if all(to, content):
+        if all([to, content]):
             self.view.chat_output.add_message(to, content)
+            self.current_buf_changed = True
+
+    async def listen(self) -> None:
+        if self.client.connected:
+            self.current_buf_changed = False
+            for message in self.client.get_all_messages():
+                self.handle_message(message)
+        if self.current_buf_changed:
+            self.view.page.update()
+        self.view.page.run_task(self.listen)

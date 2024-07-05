@@ -31,13 +31,26 @@ class IrcUser:
 
 
 class IrcMessage:
-    def __init__(self, source: str | None, command: str, params: str):
+    def __init__(self, source: IrcUser | None, command: str, params: str):
         self.source = source
         self.command = command
         self.params = params
 
     def __str__(self):
         return f"<Message source={self.source} command={self.command}>"
+
+    def __repr__(self) -> str:
+        if isinstance(self.source, IrcUser):
+            source = repr(self.source)
+        else:
+            source = self.source
+        return (
+            f'{":" + source + " " if self.source else ""}'
+            f"{self.command} {self.params}\r\n"
+        )
+
+    def __bytes__(self) -> bytes:
+        return bytes(repr(self), "utf-8")
 
     @classmethod
     def from_raw(cls, raw: str):
@@ -99,7 +112,7 @@ class IrcBaseClient:
         self.socket.send(raw)
 
     def get_message(self) -> IrcMessage | None:
-        readable, w, e = select.select([self.socket], [], [], 0)
+        readable, _, _ = select.select([self.socket], [], [], 0)
         if readable:
             # Read reply one byte at a time
             reply = b""
