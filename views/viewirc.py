@@ -59,7 +59,7 @@ class ViewMessageHandlers:
     def topic(self, message: IrcMessage) -> HandlerResponse:
         _, channel, *topic = message.params.split(" ")
         topic = " ".join(topic)
-        self.view.topic_output.set_buffer_topic(channel, topic)
+        self.view.topic_output.set_buffer_topic(channel, topic[1:])
         return channel, "Topic changed"
 
     def topic_who_time(self, message: IrcMessage) -> HandlerResponse:
@@ -75,8 +75,9 @@ class ViewMessageHandlers:
         remaining = " ".join(remaining)
         return "<server>", f"<!> {count} {remaining[1:]}"
 
-    def no_topic(message: IrcMessage) -> HandlerResponse:
-        # TODO: blank topic in view
+    def no_topic(self, message: IrcMessage) -> HandlerResponse:
+        _, channel, *_ = message.params.split(" ")
+        self.view.topic_output.set_buffer_topic(channel, "")
         return "", ""
 
     def quit(self, message: IrcMessage) -> HandlerResponse:

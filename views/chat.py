@@ -119,7 +119,7 @@ class ChatView(ft.View):
         self.topic_output.set_active_buffer(buffer_name)
         self.page.update()
 
-    def add_message_to_buffer(self, buffer_name: str, message: str):
+    def add_message_to_buffer(self, buffer_name: str, message: str) -> None:
         nick, *content = message.split(" ")
         self.chat_output.add_message_to_buffer(buffer_name, nick, " ".join(content))
 
@@ -236,7 +236,7 @@ class ChatMessage(ft.Row):
 
 
 class TopicOutput(ft.Container):
-    def __init__(self, topic: str = "") -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.buffers = {
             "<server>": ft.Text(
@@ -252,9 +252,20 @@ class TopicOutput(ft.Container):
         self.content = self.buffers[self.active_buffer]
 
     def register_buffer(self, buffer_name: str) -> None:
-        self.buffers[buffer_name] = ft.Text(value="")
+        if buffer_name == "<server>":
+            self.buffers[buffer_name] = ft.Text(
+                spans=[
+                    ft.TextSpan(
+                        text="Server Messages",
+                        style=ft.TextStyle(weight=ft.FontWeight.BOLD),
+                    ),
+                ]
+            )
+        else:
+            self.buffers[buffer_name] = ft.Text(value="")
 
     def set_buffer_topic(self, buffer_name: str, topic: str) -> None:
+        print("setting topic for", buffer_name, "to", topic)
         try:
             self.buffers[buffer_name] = ft.Text(
                 spans=[
