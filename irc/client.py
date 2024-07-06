@@ -135,6 +135,9 @@ class IrcBaseClient:
     def join(self, channel: str) -> None:
         self.send(IrcMessage(None, "JOIN", channel))
 
+    def part(self, channel: str, reason: str) -> None:
+        self.send(IrcMessage(None, "PART", f"{channel} {reason}"))
+
     def send_private_message(self, to: str, text: str) -> None:
         self.send(IrcMessage(None, "PRIVMSG", f"{to} {text}"))
 
@@ -144,14 +147,26 @@ class IrcBaseClient:
     def get_names(self, channel: str) -> None:
         self.send(IrcMessage(None, "NAMES", channel))
 
-    def pong(self, s) -> None:
+    def pong(self, s: str) -> None:
         self.send(IrcMessage(None, "PONG", s))
 
-    def query_topic(self, channel) -> None:
+    def query_topic(self, channel: str) -> None:
         self.send(IrcMessage(None, "TOPIC", channel))
 
-    def invite(self, nick, channel) -> None:
+    def set_topic(self, channel: str, topic: str) -> None:
+        self.send(IrcMessage(None, "TOPIC", f"{channel} {topic}"))
+
+    def invite(self, nick: str, channel: str) -> None:
         self.send(IrcMessage(None, "INVITE", f"{nick} {channel}"))
+
+    def kick(self, channel: str, nick: str, comment: str) -> None:
+        self.send(IrcMessage(None, "KICK", f"{channel} {nick} {comment}"))
+
+    def motd(self) -> None:
+        self.send(IrcMessage(None, "MOTD", ""))
+
+    def version(self) -> None:
+        self.send(IrcMessage(None, "VERSION", ""))
 
     def disconnect(self) -> None:
         self.send(IrcMessage(None, "QUIT", "Disconnecting in a spec compliant way"))

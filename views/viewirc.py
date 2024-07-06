@@ -80,6 +80,61 @@ class ViewMessageHandlers:
         self.view.topic_output.set_buffer_topic(channel, "")
         return "", ""
 
+    def no_such_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, channel, *_ = message.params.split(" ")
+        return "<server>", f"<!> Channel {channel} does not exist"
+
+    def not_on_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, channel, *_ = message.params.split(" ")
+        return "<server>", f"<!> You are not on channel {channel}"
+
+    def chan_op_privs_needed(self, message: IrcMessage) -> HandlerResponse:
+        _, channel, *_ = message.params.split(" ")
+        return "<server>", f"<!> You are not an operator on channel {channel}"
+
+    def need_more_params(self, message: IrcMessage) -> HandlerResponse:
+        _, command, *_ = message.params.split(" ")
+        return "<server>", f"<!> Not enough parameters given for command {command}"
+
+    def inviting(self, message: IrcMessage) -> HandlerResponse:
+        _, nick, channel = message.params.split(" ")
+        return "<server>", f"<!> Inviting user {nick} to channel {channel}"
+
+    def user_on_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, nick, channel, *_ = message.params.split(" ")
+        return "<server>", f"<!> User {nick} is already on channel {channel}"
+
+    def user_not_in_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, nick, channel, *_ = message.params.split(" ")
+        return "<server>", f"<!> User {nick} is not on channel {channel}"
+
+    def no_such_server(self, message: IrcMessage) -> HandlerResponse:
+        _, server_name, *_ = message.params.split(" ")
+        return "<server>", f"<!> Server {server_name} does not exist"
+
+    def no_such_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, channel_name, *_ = message.params.split(" ")
+        return "<server>", f"<!> Channel {channel_name} does not exist"
+
+    def cannot_send_to_channel(self, message: IrcMessage) -> HandlerResponse:
+        _, channel_name, *_ = message.params.split(" ")
+        return "<server>", f"<!> Cannot send to channel {channel_name}"
+
+    def too_many_channels(self, message: IrcMessage) -> HandlerResponse:
+        _, channel_name, *_ = message.params.split(" ")
+        return (
+            "<server>",
+            f"<!> Cannot join channel {channel_name}: You have joined too many channels",
+        )
+
+    def i_support(self, message: IrcMessage) -> HandlerResponse:
+        _, *response = message.params.split(" ")
+        return "<server>", response
+
+    def version(self, message: IrcMessage) -> HandlerResponse:
+        _, version, _, *comments = message.params.split(" ")
+        return "<server>", f"{version} {comments}"
+
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
         quit_message = message.params[1:]
@@ -122,6 +177,18 @@ class ViewIrcClient:
             replycodes.RPL_LUSERUNKNOWN: message_handlers.luser,
             replycodes.RPL_LUSERCHANNELS: message_handlers.luser,
             replycodes.RPL_NOTOPIC: message_handlers.no_topic,
+            replycodes.RPL_INVITING: message_handlers.inviting,
+            replycodes.RPL_ISUPPORT: message_handlers.i_support,
+            replycodes.RPL_VERSION: message_handlers.version,
+            replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
+            replycodes.ERR_NOTONCHANNEL: message_handlers.not_on_channel,
+            replycodes.ERR_CHANOPRIVSNEEDED: message_handlers.chan_op_privs_needed,
+            replycodes.ERR_NEEDMOREPARAMS: message_handlers.need_more_params,
+            replycodes.ERR_USERONCHANNEL: message_handlers.user_on_channel,
+            replycodes.ERR_NOSUCHSERVER: message_handlers.no_such_server,
+            replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
+            replycodes.ERR_CANNOTSENDTOCHAN: message_handlers.cannot_send_to_channel,
+            replycodes.ERR_TOOMANYCHANNELS: message_handlers.too_many_channels,
         }
         self.current_buf_changed = False
 

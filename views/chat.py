@@ -64,6 +64,27 @@ class ChatView(ft.View):
                     case "/join":
                         if len(remaining) == 1:
                             self.join(remaining[0])
+                    case "/part":
+                        if len(remaining) == 1:
+                            if remaining[0] != "<server>":
+                                self.part(remaining[0], "")
+                        elif len(remaining) >= 2:
+                            channel, *reason = remaining
+                            reason = " ".join(reason)
+                            self.part(channel, reason)
+                    case "/invite":
+                        if len(remaining) == 2:
+                            nick, channel = remaining
+                            self.irc_client.client.invite(nick, channel)
+                    case "/kick":
+                        if len(remaining) >= 2:
+                            channel, nick, *comment = remaining
+                            comment = " ".join(comment)
+                            self.irc_client.client.kick(channel, nick, comment)
+                    case "/motd":
+                        self.irc_client.client.motd()
+                    case "/version":
+                        self.irc_client.client.version()
             else:
                 self.irc_client.client.send_private_message(
                     self.chat_output.active_buffer, self.chat_input.value
@@ -114,6 +135,15 @@ class ChatView(ft.View):
         self.page.update()
         self.page.run_task(self.set_buffer_after_delay)
 
+    def part(self, channel_name: str, reason: str) -> None:
+        self.irc_client.client.part(channel_name, reason)
+        self.buffer_buttons.remove_button(channel_name)
+
+    def start_whisper(self, nick: str) -> None:
+        self.add_buffer(nick)
+        self.set_active_buffer(nick)
+        self.page.update()
+
     def set_active_buffer(self, buffer_name: str) -> None:
         self.active_buffer = buffer_name
         self.chat_output.set_active_buffer(buffer_name)
@@ -141,6 +171,11 @@ class BufferButtons(ft.Row):
 
     def add_button(self, button: ft.TextButton) -> None:
         self.controls.append(button)
+
+    def remove_button(self, buffer_name: str) -> None:
+        self.controls = [
+            button for button in self.controls if button.text != buffer_name
+        ]
 
 
 class ChatOutput(ft.ListView):
