@@ -117,6 +117,9 @@ class ChatView(ft.View):
         self.chat_output.set_active_buffer(buffer_name)
         self.user_list.set_active_buffer(buffer_name)
         self.topic_output.set_active_buffer(buffer_name)
+        self.appbar.title = ft.Row(
+            [ft.Text(self.active_buffer), ft.Image("/images/lizard_icon_small.png")]
+        )
         self.page.update()
 
     def add_message_to_buffer(self, buffer_name: str, message: str) -> None:
