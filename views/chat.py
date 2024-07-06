@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 import flet as ft
@@ -111,6 +112,7 @@ class ChatView(ft.View):
         self.irc_client.client.join(channel_name)
         self.set_active_buffer(channel_name)
         self.page.update()
+        self.page.run_task(self.set_buffer_after_delay)
 
     def set_active_buffer(self, buffer_name: str) -> None:
         self.active_buffer = buffer_name
@@ -125,6 +127,11 @@ class ChatView(ft.View):
     def add_message_to_buffer(self, buffer_name: str, message: str) -> None:
         nick, *content = message.split(" ")
         self.chat_output.add_message_to_buffer(buffer_name, nick, " ".join(content))
+
+    async def set_buffer_after_delay(self) -> None:
+        await asyncio.sleep(1)
+        self.set_active_buffer(self.active_buffer)
+        self.page.update()
 
 
 class BufferButtons(ft.Row):
