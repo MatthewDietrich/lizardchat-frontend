@@ -275,7 +275,9 @@ class TopicOutput(ft.Container):
                     ft.TextSpan(
                         text="Topic: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD)
                     ),
-                    ft.TextSpan(text=topic, style=ft.TextStyle(ft.FontWeight.NORMAL)),
+                    ft.TextSpan(
+                        text=topic, style=ft.TextStyle(weight=ft.FontWeight.NORMAL)
+                    ),
                 ]
             )
         except KeyError:
