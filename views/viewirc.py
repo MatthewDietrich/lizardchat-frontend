@@ -129,11 +129,18 @@ class ViewMessageHandlers:
 
     def i_support(self, message: IrcMessage) -> HandlerResponse:
         _, *response = message.params.split(" ")
-        return "<server>", response
+        response = " ".join(response)
+        return "<server>", f"<!> {response}"
+
+    def admin_info(self, message: IrcMessage) -> HandlerResponse:
+        _, *info = message.params.split(" ")
+        info = " ".join(info)[1:]
+        return "<server>", f"<!> Admin info: {info}"
 
     def version(self, message: IrcMessage) -> HandlerResponse:
         _, version, _, *comments = message.params.split(" ")
-        return "<server>", f"{version} {comments}"
+        comments = " ".join(comments)[1:]
+        return "<server>", f"<!> Version: {version} {comments}"
 
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
@@ -180,6 +187,9 @@ class ViewIrcClient:
             replycodes.RPL_INVITING: message_handlers.inviting,
             replycodes.RPL_ISUPPORT: message_handlers.i_support,
             replycodes.RPL_VERSION: message_handlers.version,
+            replycodes.RPL_ADMINLOC1: message_handlers.admin_info,
+            replycodes.RPL_ADMINLOC2: message_handlers.admin_info,
+            replycodes.RPL_ADMINEMAIL: message_handlers.admin_info,
             replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
             replycodes.ERR_NOTONCHANNEL: message_handlers.not_on_channel,
             replycodes.ERR_CHANOPRIVSNEEDED: message_handlers.chan_op_privs_needed,

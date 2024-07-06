@@ -276,7 +276,9 @@ class ChatMessage(ft.Row):
             ft.Text(
                 value=f"{nickname}:", weight=ft.FontWeight.BOLD, font_family="Cousine"
             ),
-            ft.Text(value=message, selectable=True, font_family="Cousine"),
+            ft.Text(
+                value=message, selectable=True, font_family="Cousine", no_wrap=False
+            ),
         ]
 
 
