@@ -1,28 +1,25 @@
 import flet as ft
 
-from views.channel import ChannelView
+from views.chat import ChatView
 from views.home import HomeView
 
 
 def main(page: ft.Page) -> None:
-    page.title = "IRC Client"
+    page.title = "Lizardnet Webchat"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"Cousine": "/fonts/Cousine-Regular.ttf"}
 
-    home_view = HomeView()
-    channel_view = ChannelView("#main_chat")
-
     def route_change(e: ft.RouteChangeEvent) -> None:
         page.views.clear()
-        page.views.append(home_view)
+        page.views.append(HomeView())
         match page.route:
-            case "/channel":
-                page.views.append(channel_view)
+            case "/chat":
+                page.views.append(ChatView())
         page.update()
 
     page.on_route_change = route_change
-    page.go("/channel")
+    page.go("/")
 
 
 ft.app(target=main, assets_dir="assets")

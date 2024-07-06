@@ -8,5 +8,5 @@ pip install -r requirements.txt
 
 ## To run
 ```
-flet run main.py
+flet run --web main.py
 ```
