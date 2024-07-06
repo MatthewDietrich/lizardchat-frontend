@@ -15,7 +15,7 @@ class ChatView(ft.View):
         self.chat_input = ChatInput()
         self.buffer_buttons = BufferButtons()
         self.chat_input.on_submit = self.chat_submit
-        self.active_buffer = "#lizardchatwebtest"
+        self.active_buffer = "<server>"
         self.appbar = ft.AppBar(
             title=ft.Row(
                 [ft.Text(self.active_buffer), ft.Image("/images/lizard_icon_small.png")]
@@ -49,9 +49,8 @@ class ChatView(ft.View):
         self.login()
         self.add_buffer("<server>")
         self.page.run_task(self.irc_client.listen)
-        self.user_list.set_nicks([self.page.session.get("nickname")])
         self.page.on_view_pop = lambda _: self.confirm_logout()
-        self.join(self.active_buffer)
+        self.join("#lizardchatwebtest")
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
@@ -100,17 +99,20 @@ class ChatView(ft.View):
     def add_buffer(self, buffer_name) -> None:
         button = ft.TextButton(text=buffer_name)
         self.chat_output.register_buffer(buffer_name)
+        self.user_list.register_buffer(buffer_name)
         button.on_click = lambda _: self.set_active_buffer(buffer_name)
         self.buffer_buttons.add_button(button)
 
     def join(self, channel_name: str) -> None:
         self.add_buffer(channel_name)
-        self.chat_output.set_active_buffer(channel_name)
         self.irc_client.client.join(channel_name)
+        self.set_active_buffer(channel_name)
+        self.page.update()
 
     def set_active_buffer(self, buffer_name: str) -> None:
         self.active_buffer = buffer_name
         self.chat_output.set_active_buffer(buffer_name)
+        self.user_list.set_active_buffer(buffer_name)
         self.page.update()
 
     def add_message_to_buffer(self, buffer_name: str, message: str):
@@ -137,8 +139,6 @@ class ChatOutput(ft.ListView):
         self.on_scroll_interval = 0
         self.buffers = {"<server>": []}
         self.active_buffer = "<server>"
-        self.add_message("squam", "Hello world!")
-        self.add_message("beavis", "Hehehe")
 
     def add_message(self, nick: str, message: str) -> None:
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
@@ -181,16 +181,30 @@ class NickBox(ft.Container):
 class UserList(ft.ListView):
     def __init__(self) -> None:
         super().__init__()
-        self.nicks = []
         self.padding = 10
         self.title_text = ft.Text(value="Users", weight=ft.FontWeight.BOLD)
         self.controls = [self.title_text]
+        self.active_buffer = "<server>"
+        self.buffers = {"<server>": []}
 
-    def set_nicks(self, nicks: list[str]) -> None:
-        self.nicks = sorted(set(self.nicks), key=lambda s: s.casefold())
-        self.controls = [self.title_text]
-        for nick in self.nicks:
-            self.controls.append(NickBox(nick))
+    def register_buffer(self, buffer_name: str) -> None:
+        self.buffers[buffer_name] = []
+
+    def set_buffer_nicks(self, buffer_name: str, nicks: list[str]) -> None:
+        nicks = sorted(nicks, key=lambda s: s.casefold())
+        try:
+            self.buffers[buffer_name] = [NickBox(nick) for nick in nicks]
+        except KeyError:
+            print("No buffer named", buffer_name)
+
+    def set_active_buffer(self, buffer_name) -> None:
+        try:
+            self.controls = [self.title_text]
+            for nick_box in self.buffers[buffer_name]:
+                self.controls.append(nick_box)
+            self.active_buffer = buffer_name
+        except KeyError:
+            print("No buffer named", buffer_name)
 
 
 class ChatInput(ft.TextField):

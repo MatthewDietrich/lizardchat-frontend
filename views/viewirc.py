@@ -46,10 +46,10 @@ class ViewMessageHandlers:
         return "<server>", f"<!> {content[1:]}"
 
     def namreply(self, message: IrcMessage) -> HandlerResponse:
-        _, _, _, *names = message.params.split(" ")
+        _, _, channel, *names = message.params.split(" ")
         if names:
             names[0] = names[0][1:]  # remove leading colon from first name
-        self.view.user_list.set_nicks(names)
+        self.view.user_list.set_buffer_nicks(channel, names)
         return "", ""
 
     def end_of_names(self, message: IrcMessage) -> HandlerResponse:
