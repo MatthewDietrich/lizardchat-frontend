@@ -1,6 +1,7 @@
 import select
 import socket
 from random import randint
+from typing import Self
 
 
 class IrcUser:
@@ -10,17 +11,17 @@ class IrcUser:
         self.host = host
         self.realname = realname
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"<User nick={self.nick} username={self.username}>"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.nick}!{self.username}@{self.host}"
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return bytes(repr(self), "utf-8")
 
     @classmethod
-    def from_raw(cls, raw: str):
+    def from_raw(cls, raw: str) -> Self:
         """Construct a User from raw IRC server user string"""
         try:
             nick, remaining = raw.split("!")
@@ -31,12 +32,12 @@ class IrcUser:
 
 
 class IrcMessage:
-    def __init__(self, source: IrcUser | None, command: str, params: str):
+    def __init__(self, source: IrcUser | None, command: str, params: str) -> None:
         self.source = source
         self.command = command
         self.params = params
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"<Message source={self.source} command={self.command}>"
 
     def __repr__(self) -> str:
@@ -53,7 +54,7 @@ class IrcMessage:
         return bytes(repr(self), "utf-8")
 
     @classmethod
-    def from_raw(cls, raw: str):
+    def from_raw(cls, raw: str) -> Self:
         """Construct a Message object from raw IRC server output"""
         stripped = raw.strip("\r\n")
         try:
@@ -82,7 +83,7 @@ class IrcBaseClient:
         self.socket = None
         self.connected = False
 
-    def connect(self, hostname: str, port: int = 6667):
+    def connect(self, hostname: str, port: int = 6667) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((hostname, port))
         self.socket.settimeout(10)
@@ -90,7 +91,7 @@ class IrcBaseClient:
         if self.password:
             self.send(IrcMessage(None, "PASS", self.password))
         self.send(IrcMessage(None, "NICK", self.nick))
-        self.send(IrcMessage(None, "USER", f"{self.nick} 0 * :{self.nick}"))
+        self.send(IrcMessage(None, "USER", f"{self.username} 0 * :{self.username}"))
 
         while True:
             message = self.get_message()
@@ -143,13 +144,16 @@ class IrcBaseClient:
     def get_names(self, channel: str) -> None:
         self.send(IrcMessage(None, "NAMES", channel))
 
-    def pong(self, s):
+    def pong(self, s) -> None:
         self.send(IrcMessage(None, "PONG", s))
 
-    def query_topic(self, channel):
+    def query_topic(self, channel) -> None:
         self.send(IrcMessage(None, "TOPIC", channel))
 
-    def disconnect(self):
+    def invite(self, nick, channel) -> None:
+        self.send(IrcMessage(None, "INVITE", f"{nick} {channel}"))
+
+    def disconnect(self) -> None:
         self.send(IrcMessage(None, "QUIT", "Disconnecting in a spec compliant way"))
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()

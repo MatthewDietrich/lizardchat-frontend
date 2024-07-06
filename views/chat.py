@@ -14,6 +14,7 @@ class ChatView(ft.View):
         self.user_list = UserList()
         self.chat_input = ChatInput()
         self.buffer_buttons = BufferButtons()
+        self.topic_output = TopicOutput()
         self.chat_input.on_submit = self.chat_submit
         self.active_buffer = "<server>"
         self.appbar = ft.AppBar(
@@ -28,6 +29,7 @@ class ChatView(ft.View):
                     ft.Column(controls=[self.user_list], col={"md": 1}),
                     ft.Column(
                         controls=[
+                            self.topic_output,
                             ft.Container(
                                 content=self.chat_output, bgcolor=CustomColors.BLACK
                             ),
@@ -100,6 +102,7 @@ class ChatView(ft.View):
         button = ft.TextButton(text=buffer_name)
         self.chat_output.register_buffer(buffer_name)
         self.user_list.register_buffer(buffer_name)
+        self.topic_output.register_buffer(buffer_name)
         button.on_click = lambda _: self.set_active_buffer(buffer_name)
         self.buffer_buttons.add_button(button)
 
@@ -113,6 +116,7 @@ class ChatView(ft.View):
         self.active_buffer = buffer_name
         self.chat_output.set_active_buffer(buffer_name)
         self.user_list.set_active_buffer(buffer_name)
+        self.topic_output.set_active_buffer(buffer_name)
         self.page.update()
 
     def add_message_to_buffer(self, buffer_name: str, message: str):
@@ -229,3 +233,43 @@ class ChatMessage(ft.Row):
             ),
             ft.Text(value=message, selectable=True, font_family="Cousine"),
         ]
+
+
+class TopicOutput(ft.Container):
+    def __init__(self, topic: str = "") -> None:
+        super().__init__()
+        self.buffers = {
+            "<server>": ft.Text(
+                spans=[
+                    ft.TextSpan(
+                        text="Server Messages",
+                        style=ft.TextStyle(weight=ft.FontWeight.BOLD),
+                    ),
+                ]
+            )
+        }
+        self.active_buffer = "<server>"
+        self.content = self.buffers[self.active_buffer]
+
+    def register_buffer(self, buffer_name: str) -> None:
+        self.buffers[buffer_name] = ft.Text(value="")
+
+    def set_buffer_topic(self, buffer_name: str, topic: str) -> None:
+        try:
+            self.buffers[buffer_name] = ft.Text(
+                spans=[
+                    ft.TextSpan(
+                        text="Topic: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD)
+                    ),
+                    ft.TextSpan(text=topic, style=ft.TextStyle(ft.FontWeight.NORMAL)),
+                ]
+            )
+        except KeyError:
+            print("No buffer named", buffer_name)
+
+    def set_active_buffer(self, buffer_name) -> None:
+        try:
+            self.content = self.buffers[buffer_name]
+            self.active_buffer = buffer_name
+        except KeyError:
+            print("No buffer named", buffer_name)

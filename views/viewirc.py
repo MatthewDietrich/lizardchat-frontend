@@ -59,7 +59,7 @@ class ViewMessageHandlers:
     def topic(self, message: IrcMessage) -> HandlerResponse:
         _, channel, *topic = message.params.split(" ")
         topic = " ".join(topic)
-        # TODO: set topic in view
+        self.view.topic_output.set_buffer_topic(channel, topic)
         return channel, "Topic changed"
 
     def topic_who_time(self, message: IrcMessage) -> HandlerResponse:
