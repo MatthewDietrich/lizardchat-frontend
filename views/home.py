@@ -20,7 +20,7 @@ class HomeView(ft.View):
             password=True,
         )
         self.checkbox_agree = ft.Checkbox(
-            label="I agree to treat others on this server the way I would want to be treated",
+            label="I agree to follow the server rules",
             value=False,
             on_change=self.validate,
             width=200,
@@ -31,8 +31,9 @@ class HomeView(ft.View):
             on_click=self.submit,
             disabled=True,
         )
+        self.rules_button = ft.TextButton(text="View Rules", on_click=self.show_rules)
         self.back_button = ft.TextButton(
-            text="Back to main site", url="https://lizard.fun"
+            text="Back to Main Site", url="https://lizard.fun"
         )
         self.controls = [
             ft.AppBar(
@@ -54,6 +55,7 @@ class HomeView(ft.View):
             self.text_password,
             self.checkbox_agree,
             self.login_button,
+            self.rules_button,
             self.back_button,
         ]
         self.vertical_alignment = ft.MainAxisAlignment.CENTER
@@ -72,3 +74,14 @@ class HomeView(ft.View):
         self.page.session.set("username", f"lizardchat-web")
         self.page.session.set("realname", f"lizardchat-web")
         self.page.go("/chat")
+
+    def show_rules(self, e: ft.ControlEvent) -> None:
+        with open("assets/text/rules.txt", "r") as f:
+            rules_text = f.read()
+        rules_dialog = ft.AlertDialog(
+            content=ft.Text(rules_text),
+            actions=[
+                ft.TextButton(text="Ok", on_click=lambda _: self.page.close_dialog())
+            ],
+        )
+        self.page.show_dialog(rules_dialog)
