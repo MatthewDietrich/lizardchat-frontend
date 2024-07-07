@@ -27,8 +27,12 @@ class HomeView(ft.View):
         )
         self.login_button = ft.ElevatedButton(
             text="Enter the Chat",
+            scale=1.5,
             on_click=self.submit,
             disabled=True,
+        )
+        self.back_button = ft.TextButton(
+            text="Back to main site", url="https://lizard.fun"
         )
         self.controls = [
             ft.AppBar(
@@ -50,6 +54,7 @@ class HomeView(ft.View):
             self.text_password,
             self.checkbox_agree,
             self.login_button,
+            self.back_button,
         ]
         self.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
