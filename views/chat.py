@@ -56,6 +56,7 @@ class ChatView(ft.View):
         self.page.on_view_pop = lambda _: self.confirm_logout()
         self.join("#main_chat")
         self.page.on_close = self.logout
+        self.page.session.set("nickname", self.irc_client.client.nick)
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
@@ -118,14 +119,28 @@ class ChatView(ft.View):
                         message = " ".join(remaining)
                         self.irc_client.client.disconnect(message)
                         self.page.go("/")
+                    case "/say":
+                        if len(remaining) >= 1:
+                            message = " ".join(remaining)
+                            self.irc_client.client.send_private_message(
+                                self.active_buffer, message
+                            )
+                            self.chat_output.add_message(
+                                self.page.session.get("nickname"), message
+                            )
+                    case "/nick":
+                        if len(remaining) == 1:
+                            nick = remaining[0]
+                        self.irc_client.client.set_nick(nick)
                     case "/help":
                         self.add_message_to_buffer(
                             "<server>",
-                            "<!> Available commands are /msg /join /part /invite /kick /motd /version /help",
+                            "<!>",
+                            "Available commands are /msg /join /part /invite /kick /motd /version /help",
                         )
                     case _:
                         self.add_message_to_buffer(
-                            "<server>", "<!> Type /help for list of commands"
+                            "<server>", "<!>", "Type /help for list of commands"
                         )
             else:
                 self.irc_client.client.send_private_message(
@@ -326,10 +341,18 @@ class UserList(ft.ListView):
     def remove_user(self, nick: str) -> None:
         for buffer_name, buffer in self.buffers.items():
             nicks = [
-                nickbox.content.value
+                nickbox.content.value.lower()
                 for nickbox in buffer
                 if nickbox.content.value != nick
             ]
+            self.set_buffer_nicks(buffer_name, nicks)
+
+    def replace_name(self, old_nick: str, new_nick: str) -> None:
+        for buffer_name, buffer in self.buffers.items():
+            nicks = [nickbox.content.value.lower() for nickbox in buffer]
+            with contextlib.suppress(ValueError):
+                nicks.remove(old_nick.lower())
+            nicks.append(new_nick)
             self.set_buffer_nicks(buffer_name, nicks)
 
 

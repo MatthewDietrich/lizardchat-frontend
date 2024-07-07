@@ -32,7 +32,7 @@ class IrcUser:
 
 
 class IrcMessage:
-    def __init__(self, source: IrcUser | None, command: str, params: str) -> None:
+    def __init__(self, source: IrcUser | str | None, command: str, params: str) -> None:
         self.source = source
         self.command = command
         self.params = params
@@ -87,11 +87,7 @@ class IrcBaseClient:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((hostname, port))
         self.socket.settimeout(10)
-
-        if self.password:
-            self.send(IrcMessage(None, "PASS", self.password))
-        self.set_nick(self.nick)
-        self.send(IrcMessage(None, "USER", f"{self.username} 0 * :{self.username}"))
+        self.initial_auth()
 
         while True:
             message = self.get_message()
@@ -101,12 +97,17 @@ class IrcBaseClient:
                     case "005":
                         break
                     case "433":  # Nickname already in use
-                        self.send(
-                            IrcMessage(None, "NICK", f"{self.nick}_{randint(10, 99)}")
-                        )
+                        self.nick = f"Guest_{randint(10, 99)}"
+                        self.initial_auth()
                         break
 
         self.connected = True
+
+    def initial_auth(self):
+        if self.password:
+            self.send(IrcMessage(None, "PASS", self.password))
+        self.set_nick(self.nick)
+        self.send(IrcMessage(None, "USER", f"{self.username} 0 * :{self.username}"))
 
     def send(self, message: IrcMessage) -> None:
         raw = bytes(message)

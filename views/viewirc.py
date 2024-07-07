@@ -4,7 +4,7 @@ from typing import TypeAlias, Self
 import flet as ft
 
 from irc import replycodes
-from irc.client import IrcBaseClient, IrcMessage
+from irc.client import IrcBaseClient, IrcMessage, IrcUser
 
 
 HandlerResponse: TypeAlias = tuple[str, str]
@@ -165,9 +165,12 @@ class ViewMessageHandlers:
         return "<server>", "<!> You are now an IRC operator"
 
     def nick(self, message: IrcMessage) -> HandlerResponse:
+        new_nick = message.params.strip(":")
         if message.source.nick == self.client.nick:
-            self.client.nick = message.source.nick
-            return "<server>", f"<!> You are now known as {message.source.nick}"
+            self.client.nick = new_nick
+            self.view.page.session.set("nickname", new_nick)
+            self.view.user_list.replace_name(message.source.nick, new_nick)
+            return "<server>", f"<!> You are now known as {new_nick}"
         else:
             return (
                 "<server>",
@@ -177,13 +180,35 @@ class ViewMessageHandlers:
     def notice(self, message: IrcMessage) -> HandlerResponse:
         target, *text = message.params.split(" ")
         text = " ".join(text).strip(":")
-        return target, f"{message.source.nick} {text}"
+        source = message.source
+        if isinstance(message.source, IrcUser):
+            source = message.source.nick
+        return target, f"{source} {text}"
 
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
         quit_message = message.params.strip(":")
         self.view.user_list.remove_user(nick)
         return "<server>", f"<!> {nick} has quit: {quit_message}"
+
+    def mode(self, message: IrcMessage) -> HandlerResponse:
+        return "<server>", f"<!> MODE {message.params}"
+    
+    def welcome(self, message: IrcMessage) -> HandlerResponse:
+        return "<server>", f"<!> {message.params.strip(":")}"
+    
+    def not_registered(self, message: IrcMessage) -> HandlerResponse:
+        self.client.initial_auth()
+        self.client.join("#main_chat")
+        self.view.page.session.set("nickname", self.client.nick)
+        return "", ""
+    
+    def nickname_in_use(self, message: IrcMessage) -> HandlerResponse:
+        _, nick, *_ = message.params.split(" ")
+        return "<server>", f"<!> Nickname {nick} already in use"
+    
+    def already_registered(self, message: IrcMessage) -> HandlerResponse:
+        return "", ""
 
     def fatal_error(self, message: IrcMessage) -> HandlerResponse:
         self.view.fatal_error(message.params)
@@ -210,6 +235,11 @@ class ViewIrcClient:
             "PING": message_handlers.ping,
             "NICK": message_handlers.nick,
             "NOTICE": message_handlers.notice,
+            replycodes.RPL_WELCOME: message_handlers.welcome,
+            replycodes.RPL_YOURHOST: message_handlers.welcome,
+            replycodes.RPL_CREATED: message_handlers.welcome,
+            replycodes.RPL_MYINFO: message_handlers.welcome,
+            replycodes.RPL_ISUPPORT: message_handlers.welcome,
             replycodes.RPL_BOUNCE: message_handlers.bounce,
             replycodes.RPL_LUSERCLIENT: message_handlers.users,
             replycodes.RPL_LUSERME: message_handlers.users,
@@ -245,6 +275,8 @@ class ViewIrcClient:
             replycodes.ERR_TOOMANYCHANNELS: message_handlers.too_many_channels,
             replycodes.ERR_PASSWDMISMATCH: message_handlers.password_mismatch,
             replycodes.ERR_NOOPERHOST: message_handlers.no_oper_host,
+            replycodes.ERR_NOTREGISTERED: message_handlers.not_registered,
+            replycodes.ERR_ALREADYREGISTERED: message_handlers.already_registered,
         }
         self.current_buf_changed = False
 
@@ -257,6 +289,8 @@ class ViewIrcClient:
             to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
+            if to == "*":
+                to = "<server>"
             from_nick, *content = content.split(" ")
             content = " ".join(content)
             if to == self.view.page.session.get("nickname"):
