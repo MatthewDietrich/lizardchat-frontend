@@ -55,6 +55,7 @@ class ChatView(ft.View):
         self.page.run_task(self.irc_client.listen)
         self.page.on_view_pop = lambda _: self.confirm_logout()
         self.join("#main_chat")
+        self.page.on_close = self.logout
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
