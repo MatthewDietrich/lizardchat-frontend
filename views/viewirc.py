@@ -1,5 +1,5 @@
 import datetime
-from typing import TypeAlias
+from typing import TypeAlias, Self
 
 import flet as ft
 
@@ -267,3 +267,24 @@ class ViewIrcClient:
             if self.current_buf_changed:
                 self.view.page.update()
             self.view.page.run_task(self.listen)
+
+
+class FormattedMessage:
+    BOLD = ft.TextStyle(weight=ft.FontWeight.BOLD, italic=False)
+    ITALIC = ft.TextStyle(weight=ft.FontWeight.NORMAL, italic=True)
+    BOLD_ITALIC = ft.TextStyle(weight=ft.FontWeight.BOLD, italic=True)
+    NORMAL = ft.TextStyle(weight=ft.FontWeight.NORMAL, italic=False)
+
+    def __init__(
+        self, input_text: str, irc_text: str, spans: list[ft.TextSpan]
+    ) -> None:
+        self.irc_text = irc_text
+        self.spans = spans
+
+    @classmethod
+    def from_input(cls, input_text: str) -> Self:
+        pass
+
+    @classmethod
+    def from_irc(cls, irc_text: str) -> Self:
+        pass
