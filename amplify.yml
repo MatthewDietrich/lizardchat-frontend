@@ -4,9 +4,9 @@ frontend:
     build:
       commands:
         - 'pip install -r requirements.txt'
-      artifacts:
-        baseDirectory: /
-        files:
-            - '**/*'
-    cache:
-        paths: []
+  artifacts:
+    baseDirectory: /
+    files:
+        - '**/*'
+  cache:
+      paths: []
