@@ -32,13 +32,13 @@ class ViewMessageHandlers:
     def join(self, message: IrcMessage) -> HandlerResponse:
         channel = message.params[1:]
         self.client.get_names(channel)
-        return channel, f"{message.source.nick} joined {channel}"
+        return channel, f"<!> {message.source.nick} joined {channel}"
 
     def part(self, message: IrcMessage) -> HandlerResponse:
         channel, *reason = message.params.split(" ")
         reason = " ".join(reason).strip(":")
         self.client.get_names(channel)
-        return channel, f"{message.source.nick} left {channel} ({reason})"
+        return channel, f"<!> {message.source.nick} left {channel} ({reason})"
 
     def users(self, message: IrcMessage) -> HandlerResponse:
         _, *content = message.params.split(" ")
@@ -73,7 +73,7 @@ class ViewMessageHandlers:
         _, channel, *topic = message.params.split(" ")
         topic = " ".join(topic).strip(":")
         self.view.topic_output.set_buffer_topic(channel, topic)
-        return channel, "Topic changed"
+        return channel, "<!> Topic changed"
 
     def topic_who_time(self, message: IrcMessage) -> HandlerResponse:
         prefix, timestamp = message.params.split(":")
@@ -81,7 +81,7 @@ class ViewMessageHandlers:
         timestamp = datetime.datetime.fromtimestamp(int(timestamp)).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        return channel, f"Topic set by {actor} on {timestamp}"
+        return channel, f"<!> Topic set by {actor} on {timestamp}"
 
     def luser(self, message: IrcMessage) -> HandlerResponse:
         _, count, *remaining = message.params.split(" ")
@@ -159,10 +159,10 @@ class ViewMessageHandlers:
         return "<server>", f"<!> Password incorrect"
 
     def no_oper_host(self, message: IrcMessage) -> HandlerResponse:
-        return "<server>", "No O-lines for your host"
+        return "<server>", "<!> No O-lines for your host"
 
     def youre_oper(self, message: IrcMessage) -> HandlerResponse:
-        return "<server>", "You are now an IRC operator"
+        return "<server>", "<!> You are now an IRC operator"
 
     def nick(self, message: IrcMessage) -> HandlerResponse:
         if message.source.nick == self.client.nick:
