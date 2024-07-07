@@ -198,9 +198,11 @@ class ChatView(ft.View):
         )
         self.page.update()
 
-    def add_message_to_buffer(self, buffer_name: str, message: str) -> None:
-        nick, *content = message.split(" ")
-        self.chat_output.add_message_to_buffer(buffer_name, nick, " ".join(content))
+    def add_message_to_buffer(self, buffer_name: str, nick: str, message: str) -> None:
+        buffer_name = buffer_name.lower()
+        if self.buffer_buttons.find_button(buffer_name) is None:
+            self.add_buffer(buffer_name)
+        self.chat_output.add_message_to_buffer(buffer_name, nick, message)
 
     async def set_buffer_after_delay(self) -> None:
         await asyncio.sleep(1)
@@ -320,6 +322,15 @@ class UserList(ft.ListView):
             self.active_buffer = buffer_name
             self.buffers[buffer_name] = []
             self.controls = self.buffers[buffer_name]
+
+    def remove_user(self, nick: str) -> None:
+        for buffer_name, buffer in self.buffers.items():
+            nicks = [
+                nickbox.content.value
+                for nickbox in buffer
+                if nickbox.content.value != nick
+            ]
+            self.set_buffer_nicks(buffer_name, nicks)
 
 
 class ChatInput(ft.TextField):

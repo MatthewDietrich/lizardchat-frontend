@@ -174,11 +174,16 @@ class ViewMessageHandlers:
                 f"<!> {message.source.nick} is now known as {message.params}",
             )
 
+    def notice(self, message: IrcMessage) -> HandlerResponse:
+        target, *text = message.params.split(" ")
+        text = " ".join(text).strip(":")
+        return target, f"{message.source.nick} {text}"
+
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
-        quit_message = message.params[1:]
-        # TODO: Update users box in view
-        return "", ""
+        quit_message = message.params.strip(":")
+        self.view.user_list.remove_user(nick)
+        return "<server>", f"<!> {nick} has quit: {quit_message}"
 
     def fatal_error(self, message: IrcMessage) -> HandlerResponse:
         self.view.fatal_error(message.params)
@@ -204,6 +209,7 @@ class ViewIrcClient:
             "QUIT": message_handlers.quit,
             "PING": message_handlers.ping,
             "NICK": message_handlers.nick,
+            "NOTICE": message_handlers.notice,
             replycodes.RPL_BOUNCE: message_handlers.bounce,
             replycodes.RPL_LUSERCLIENT: message_handlers.users,
             replycodes.RPL_LUSERME: message_handlers.users,
@@ -251,11 +257,12 @@ class ViewIrcClient:
             to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
+            from_nick, *content = content.split(" ")
+            content = " ".join(content)
             if to == self.view.page.session.get("nickname"):
-                from_nick, *content = content.split(" ")
-                self.view.add_message_to_buffer(from_nick, content)
+                self.view.add_message_to_buffer(from_nick, from_nick, content)
             else:
-                self.view.add_message_to_buffer(to, content)
+                self.view.add_message_to_buffer(to, from_nick, content)
             self.current_buf_changed = True
 
     async def listen(self) -> None:
