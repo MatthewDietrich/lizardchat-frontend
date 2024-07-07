@@ -54,7 +54,7 @@ class ChatView(ft.View):
         self.add_buffer("<server>")
         self.page.run_task(self.irc_client.listen)
         self.page.on_view_pop = lambda _: self.confirm_logout()
-        self.join("#lizardchatwebtest")
+        self.join("#main_chat")
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
@@ -389,6 +389,8 @@ class TopicOutput(ft.Container):
                     ),
                 ]
             )
+            if buffer_name == self.active_buffer:
+                self.set_active_buffer(buffer_name)
         except KeyError:
             print("No buffer named", buffer_name)
 

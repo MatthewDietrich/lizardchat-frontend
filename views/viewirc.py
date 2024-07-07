@@ -53,7 +53,7 @@ class ViewMessageHandlers:
     def namreply(self, message: IrcMessage) -> HandlerResponse:
         _, _, channel, *names = message.params.split(" ")
         if names:
-            names[0] = names[0][1:]  # remove leading colon from first name
+            names[0] = names[0].strip(":")
         self.view.user_list.set_buffer_nicks(channel, names)
         if self.view.active_buffer == channel:
             self.view.page.update()
@@ -64,9 +64,15 @@ class ViewMessageHandlers:
         return "<server>", f"<!> {content}"
 
     def topic(self, message: IrcMessage) -> HandlerResponse:
+        channel, *topic = message.params.split(" ")
+        topic = " ".join(topic).strip(":")
+        self.view.topic_output.set_buffer_topic(channel, topic)
+        return channel, f"<!> Topic changed to: {topic}"
+
+    def rpl_topic(self, message: IrcMessage) -> HandlerResponse:
         _, channel, *topic = message.params.split(" ")
-        topic = " ".join(topic)
-        self.view.topic_output.set_buffer_topic(channel, topic[1:])
+        topic = " ".join(topic).strip(":")
+        self.view.topic_output.set_buffer_topic(channel, topic)
         return channel, "Topic changed"
 
     def topic_who_time(self, message: IrcMessage) -> HandlerResponse:
@@ -209,7 +215,7 @@ class ViewIrcClient:
             replycodes.RPL_ENDOFMOTD: message_handlers.motd,
             replycodes.RPL_NAMREPLY: message_handlers.namreply,
             replycodes.RPL_ENDOFNAMES: message_handlers.end_of_names,
-            replycodes.RPL_TOPIC: message_handlers.topic,
+            replycodes.RPL_TOPIC: message_handlers.rpl_topic,
             replycodes.RPL_TOPICWHOTIME: message_handlers.topic_who_time,
             replycodes.RPL_LUSEROP: message_handlers.luser,
             replycodes.RPL_LUSERUNKNOWN: message_handlers.luser,
