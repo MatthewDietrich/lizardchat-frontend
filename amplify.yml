@@ -1,0 +1,15 @@
+version: 1
+frontend:
+    phases:
+        build:
+            commands:
+                - 'pip install -r requirements.txt'
+        deploy:
+            commands:
+                - 'flet run --web --port 8080 main.py'
+    artifacts:
+        baseDirectory: /
+        files:
+            - '**/*'
+    cache:
+        paths: []
