@@ -304,6 +304,8 @@ class UserList(ft.ListView):
         nicks = sorted(nicks, key=lambda s: s.casefold())
         try:
             self.buffers[buffer_name] = [NickBox(nick) for nick in nicks]
+            if buffer_name == self.active_buffer:
+                self.set_active_buffer(buffer_name)
         except KeyError:
             print("No buffer named", buffer_name)
 

@@ -55,7 +55,8 @@ class ViewMessageHandlers:
         if names:
             names[0] = names[0][1:]  # remove leading colon from first name
         self.view.user_list.set_buffer_nicks(channel, names)
-        self.view.page.update()
+        if self.view.active_buffer == channel:
+            self.view.page.update()
         return "", ""
 
     def end_of_names(self, message: IrcMessage) -> HandlerResponse:
