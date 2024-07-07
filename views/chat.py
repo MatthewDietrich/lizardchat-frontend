@@ -55,7 +55,7 @@ class ChatView(ft.View):
         self.page.run_task(self.irc_client.listen)
         self.page.on_view_pop = lambda _: self.confirm_logout()
         self.join("#main_chat")
-        self.page.on_close = self.logout
+        self.page.on_disconnect = self.logout
         self.page.session.set("nickname", self.irc_client.client.nick)
         self.page.update()
 

@@ -289,7 +289,7 @@ class ViewIrcClient:
             to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
-            if to == "*":
+            if to in ("*", "irc.lizard.fun"):
                 to = "<server>"
             from_nick, *content = content.split(" ")
             content = " ".join(content)
