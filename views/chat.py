@@ -78,7 +78,7 @@ class ChatView(ft.View):
                             self.join(remaining[0])
                         else:
                             self.add_message_to_buffer(
-                                "<server>", "<!> Syntax: /join #channel"
+                                "<server>", "<!>", "Syntax: /join #channel"
                             )
                     case "/part":
                         if len(remaining) == 1:
@@ -90,14 +90,14 @@ class ChatView(ft.View):
                             self.part(channel, reason)
                         else:
                             self.add_message_to_buffer(
-                                "<server>", "<!> Syntax: /part #channel"
+                                "<server>", "<!>", "Syntax: /part #channel"
                             )
                     case "/invite":
                         if len(remaining) == 2:
                             nick, channel = remaining
                             self.irc_client.client.invite(nick, channel)
                             self.add_message_to_buffer(
-                                "<server>", "<!> Syntax: /invite nick #channel"
+                                "<server>", "<!>", "Syntax: /invite nick #channel"
                             )
                     case "/kick":
                         if len(remaining) >= 2:
@@ -105,7 +105,7 @@ class ChatView(ft.View):
                             comment = " ".join(comment)
                             self.irc_client.client.kick(channel, nick, comment)
                         self.add_message_to_buffer(
-                            "<server>", "<!> Syntax: /kick #channel nick comment"
+                            "<server>", "<!>", "Syntax: /kick #channel nick comment"
                         )
                     case "/motd":
                         self.irc_client.client.motd()
