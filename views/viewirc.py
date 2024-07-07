@@ -209,6 +209,10 @@ class ViewMessageHandlers:
     
     def already_registered(self, message: IrcMessage) -> HandlerResponse:
         return "", ""
+    
+    def host_hidden(self, message: IrcMessage) -> HandlerResponse:
+        _, host, *_ = message.params.split(" ")
+        return "<server>", f"<!> {host} is now your displayed host"
 
     def fatal_error(self, message: IrcMessage) -> HandlerResponse:
         self.view.fatal_error(message.params)
@@ -235,6 +239,7 @@ class ViewIrcClient:
             "PING": message_handlers.ping,
             "NICK": message_handlers.nick,
             "NOTICE": message_handlers.notice,
+            "MODE": message_handlers.mode,
             replycodes.RPL_WELCOME: message_handlers.welcome,
             replycodes.RPL_YOURHOST: message_handlers.welcome,
             replycodes.RPL_CREATED: message_handlers.welcome,
@@ -264,6 +269,7 @@ class ViewIrcClient:
             replycodes.RPL_ADMINLOC2: message_handlers.admin_info,
             replycodes.RPL_ADMINEMAIL: message_handlers.admin_info,
             replycodes.RPL_YOUREOPER: message_handlers.youre_oper,
+            replycodes.RPL_HOSTHIDDEN: message_handlers.host_hidden,
             replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
             replycodes.ERR_NOTONCHANNEL: message_handlers.not_on_channel,
             replycodes.ERR_CHANOPRIVSNEEDED: message_handlers.chan_op_privs_needed,
