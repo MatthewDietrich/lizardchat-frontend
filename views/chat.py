@@ -343,7 +343,12 @@ class ChatMessage(ft.Row):
                 value=f"{nickname}:", weight=ft.FontWeight.BOLD, font_family="Cousine"
             ),
             ft.Text(
-                value=message, selectable=True, font_family="Cousine", no_wrap=False
+                value=message,
+                selectable=True,
+                font_family="Cousine",
+                no_wrap=False,
+                overflow=ft.TextOverflow.CLIP,
+                expand=True,
             ),
         ]
 
@@ -378,7 +383,6 @@ class TopicOutput(ft.Container):
             self.buffers[buffer_name] = ft.Text(value="")
 
     def set_buffer_topic(self, buffer_name: str, topic: str) -> None:
-        print("setting topic for", buffer_name, "to", topic)
         try:
             self.buffers[buffer_name] = ft.Text(
                 spans=[
