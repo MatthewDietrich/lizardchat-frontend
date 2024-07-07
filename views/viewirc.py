@@ -20,6 +20,10 @@ class ViewMessageHandlers:
         content = " ".join(content)
         return "<server>", f"<!> {content}"
 
+    def ping(self, message: IrcMessage) -> HandlerResponse:
+        self.client.pong(message)
+        return "", ""
+
     def privmsg(self, message: IrcMessage) -> HandlerResponse:
         to, *content = message.params.split(" ")
         content = " ".join(content)[1:]
@@ -142,6 +146,15 @@ class ViewMessageHandlers:
         comments = " ".join(comments)[1:]
         return "<server>", f"<!> Version: {version} {comments}"
 
+    def password_mismatch(self, message: IrcMessage) -> HandlerResponse:
+        return "<server>", f"<!> Password incorrect"
+
+    def no_oper_host(self, message: IrcMessage) -> HandlerResponse:
+        return "<server>", "No O-lines for your host"
+
+    def youre_oper(self, message: IrcMessage) -> HandlerResponse:
+        return "<server>", "You are now an IRC operator"
+
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
         quit_message = message.params[1:]
@@ -151,22 +164,22 @@ class ViewMessageHandlers:
 
 class ViewIrcClient:
     def __init__(self, view: ft.View) -> None:
+        self.view = view
         nick = view.page.session.get("nickname")
         username = view.page.session.get("username")
         password = view.page.session.get("password")
         if nick is None:
-            print("Warning: nickname not set")
-            nick = "asdf"
-            username = "lizardchat-web"
-        self.view = view
+            self.view.page.go("/")
         self.client = IrcBaseClient(nick, username, password)
         message_handlers = ViewMessageHandlers(self.client, view)
         self.message_handler_functions = {
+            "ERROR": self.view.fatal_error,
             "PRIVMSG": message_handlers.privmsg,
             "JOIN": message_handlers.join,
             "PART": message_handlers.part,
             "TOPIC": message_handlers.topic,
             "QUIT": message_handlers.quit,
+            "PING": message_handlers.ping,
             replycodes.RPL_BOUNCE: message_handlers.bounce,
             replycodes.RPL_LUSERCLIENT: message_handlers.users,
             replycodes.RPL_LUSERME: message_handlers.users,
@@ -190,6 +203,7 @@ class ViewIrcClient:
             replycodes.RPL_ADMINLOC1: message_handlers.admin_info,
             replycodes.RPL_ADMINLOC2: message_handlers.admin_info,
             replycodes.RPL_ADMINEMAIL: message_handlers.admin_info,
+            replycodes.RPL_YOUREOPER: message_handlers.youre_oper,
             replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
             replycodes.ERR_NOTONCHANNEL: message_handlers.not_on_channel,
             replycodes.ERR_CHANOPRIVSNEEDED: message_handlers.chan_op_privs_needed,
@@ -199,6 +213,8 @@ class ViewIrcClient:
             replycodes.ERR_NOSUCHCHANNEL: message_handlers.no_such_channel,
             replycodes.ERR_CANNOTSENDTOCHAN: message_handlers.cannot_send_to_channel,
             replycodes.ERR_TOOMANYCHANNELS: message_handlers.too_many_channels,
+            replycodes.ERR_PASSWDMISMATCH: message_handlers.password_mismatch,
+            replycodes.ERR_NOOPERHOST: message_handlers.no_oper_host,
         }
         self.current_buf_changed = False
 
@@ -211,7 +227,11 @@ class ViewIrcClient:
             to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
-            self.view.add_message_to_buffer(to, content)
+            if to == self.view.page.session.get("nickname"):
+                from_nick, *content = content.split(" ")
+                self.view.add_message_to_buffer(from_nick, content)
+            else:
+                self.view.add_message_to_buffer(to, content)
             self.current_buf_changed = True
 
     async def listen(self) -> None:

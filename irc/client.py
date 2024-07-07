@@ -168,8 +168,11 @@ class IrcBaseClient:
     def version(self) -> None:
         self.send(IrcMessage(None, "VERSION", ""))
 
-    def disconnect(self) -> None:
-        self.send(IrcMessage(None, "QUIT", "Disconnecting in a spec compliant way"))
+    def oper(self, name: str, password: str) -> None:
+        self.send(IrcMessage(None, "OPER", f"{name} {password}"))
+
+    def disconnect(self, message: str = "Quitting") -> None:
+        self.send(IrcMessage(None, "QUIT", message))
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.connected = False

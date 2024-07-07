@@ -19,7 +19,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     page.on_route_change = route_change
-    page.go("/")
+    page.go("/chat")
 
 
 ft.app(target=main, assets_dir="assets")

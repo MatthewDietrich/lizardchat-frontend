@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 
 import flet as ft
@@ -61,9 +62,22 @@ class ChatView(ft.View):
             if input_value.startswith("/"):
                 command, *remaining = input_value.split(" ")
                 match command:
+                    case "/msg":
+                        if len(remaining) >= 2:
+                            target, *message = remaining
+                            message = " ".join(message)
+                            self.set_active_buffer(target)
+                            self.irc_client.client.send_private_message(target, message)
+                            self.chat_output.add_message(
+                                self.page.session.get("nickname"), message
+                            )
                     case "/join":
                         if len(remaining) == 1:
                             self.join(remaining[0])
+                        else:
+                            self.add_message_to_buffer(
+                                "<server>", "<!> Syntax: /join #channel"
+                            )
                     case "/part":
                         if len(remaining) == 1:
                             if remaining[0] != "<server>":
@@ -72,19 +86,46 @@ class ChatView(ft.View):
                             channel, *reason = remaining
                             reason = " ".join(reason)
                             self.part(channel, reason)
+                        else:
+                            self.add_message_to_buffer(
+                                "<server>", "<!> Syntax: /part #channel"
+                            )
                     case "/invite":
                         if len(remaining) == 2:
                             nick, channel = remaining
                             self.irc_client.client.invite(nick, channel)
+                            self.add_message_to_buffer(
+                                "<server>", "<!> Syntax: /invite nick #channel"
+                            )
                     case "/kick":
                         if len(remaining) >= 2:
                             channel, nick, *comment = remaining
                             comment = " ".join(comment)
                             self.irc_client.client.kick(channel, nick, comment)
+                        self.add_message_to_buffer(
+                            "<server>", "<!> Syntax: /kick #channel nick comment"
+                        )
                     case "/motd":
                         self.irc_client.client.motd()
                     case "/version":
                         self.irc_client.client.version()
+                    case "/oper":
+                        if len(remaining) == 2:
+                            name, password = remaining
+                            self.irc_client.client.oper(name, password)
+                    case "/quit":
+                        message = " ".join(remaining)
+                        self.irc_client.client.disconnect(message)
+                        self.page.go("/")
+                    case "/help":
+                        self.add_message_to_buffer(
+                            "<server>",
+                            "<!> Available commands are /msg /join /part /invite /kick /motd /version /help",
+                        )
+                    case _:
+                        self.add_message_to_buffer(
+                            "<server>", "<!> Type /help for list of commands"
+                        )
             else:
                 self.irc_client.client.send_private_message(
                     self.chat_output.active_buffer, self.chat_input.value
@@ -96,19 +137,19 @@ class ChatView(ft.View):
         self.chat_input.focus()
         self.page.update()
 
-    def confirm_logout(self) -> None:
-        def do_pop(e: ft.ControlEvent) -> None:
-            self.logout()
-            self.page.views.pop()
-            top_view = self.page.views[-1]
-            self.page.go(top_view.route)
+    def do_pop(self, e: ft.ControlEvent) -> None:
+        self.logout()
+        self.page.views.pop()
+        top_view = self.page.views[-1]
+        self.page.go(top_view.route)
 
+    def confirm_logout(self) -> None:
         logout_modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("Quit?"),
             content=ft.Text("Are you sure you want to quit?"),
             actions=[
-                ft.TextButton("Yes", on_click=do_pop),
+                ft.TextButton("Yes", on_click=self.do_pop),
                 ft.TextButton("No", on_click=lambda _: self.page.close_dialog()),
             ],
         )
@@ -145,6 +186,8 @@ class ChatView(ft.View):
         self.page.update()
 
     def set_active_buffer(self, buffer_name: str) -> None:
+        if self.buffer_buttons.find_button(buffer_name) is None:
+            self.add_buffer(buffer_name)
         self.active_buffer = buffer_name
         self.chat_output.set_active_buffer(buffer_name)
         self.user_list.set_active_buffer(buffer_name)
@@ -163,6 +206,17 @@ class ChatView(ft.View):
         self.set_active_buffer(self.active_buffer)
         self.page.update()
 
+    def fatal_error(self, error_message: str) -> None:
+        error_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Error"),
+            content=ft.Text(f"Connection closed due to error: {error_message}"),
+            actions=[
+                ft.TextButton("Back", on_click=self.do_pop),
+            ],
+        )
+        self.page.show_dialog(error_modal)
+
 
 class BufferButtons(ft.Row):
     def __init__(self) -> None:
@@ -176,6 +230,11 @@ class BufferButtons(ft.Row):
         self.controls = [
             button for button in self.controls if button.text != buffer_name
         ]
+
+    def find_button(self, buffer_name: str) -> ft.TextButton | None:
+        buttons = [button for button in self.controls if button.text == buffer_name]
+        with contextlib.suppress(IndexError):
+            return buttons[0]
 
 
 class ChatOutput(ft.ListView):
@@ -202,7 +261,9 @@ class ChatOutput(ft.ListView):
             self.controls = self.buffers[buffer_name]
             self.active_buffer = buffer_name
         except KeyError:
-            print("No buffer named", buffer_name)
+            self.active_buffer = buffer_name
+            self.buffers[buffer_name] = []
+            self.controls = self.buffers[buffer_name]
 
     def add_message_to_buffer(self, buffer_name: str, nick: str, message: str) -> None:
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
@@ -253,7 +314,9 @@ class UserList(ft.ListView):
                 self.controls.append(nick_box)
             self.active_buffer = buffer_name
         except KeyError:
-            print("No buffer named", buffer_name)
+            self.active_buffer = buffer_name
+            self.buffers[buffer_name] = []
+            self.controls = self.buffers[buffer_name]
 
 
 class ChatInput(ft.TextField):
@@ -332,4 +395,6 @@ class TopicOutput(ft.Container):
             self.content = self.buffers[buffer_name]
             self.active_buffer = buffer_name
         except KeyError:
-            print("No buffer named", buffer_name)
+            self.active_buffer = buffer_name
+            self.buffers[buffer_name] = ft.Text(value="")
+            self.content = self.buffers[buffer_name]
