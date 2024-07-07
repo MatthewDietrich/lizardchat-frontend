@@ -32,12 +32,13 @@ class ViewMessageHandlers:
     def join(self, message: IrcMessage) -> HandlerResponse:
         channel = message.params[1:]
         self.client.get_names(channel)
-        return channel, f"User joined {channel}"
+        return channel, f"{message.source.nick} joined {channel}"
 
     def part(self, message: IrcMessage) -> HandlerResponse:
-        channel = message.params[1:]
+        channel, *reason = message.params.split(" ")
+        reason = " ".join(reason).strip(":")
         self.client.get_names(channel)
-        return channel, f"User left {channel}"
+        return channel, f"{message.source.nick} left {channel} ({reason})"
 
     def users(self, message: IrcMessage) -> HandlerResponse:
         _, *content = message.params.split(" ")
@@ -54,6 +55,7 @@ class ViewMessageHandlers:
         if names:
             names[0] = names[0][1:]  # remove leading colon from first name
         self.view.user_list.set_buffer_nicks(channel, names)
+        self.view.page.update()
         return "", ""
 
     def end_of_names(self, message: IrcMessage) -> HandlerResponse:
@@ -155,10 +157,24 @@ class ViewMessageHandlers:
     def youre_oper(self, message: IrcMessage) -> HandlerResponse:
         return "<server>", "You are now an IRC operator"
 
+    def nick(self, message: IrcMessage) -> HandlerResponse:
+        if message.source.nick == self.client.nick:
+            self.client.nick = message.source.nick
+            return "<server>", f"<!> You are now known as {message.source.nick}"
+        else:
+            return (
+                "<server>",
+                f"<!> {message.source.nick} is now known as {message.params}",
+            )
+
     def quit(self, message: IrcMessage) -> HandlerResponse:
         nick = message.source.nick
         quit_message = message.params[1:]
         # TODO: Update users box in view
+        return "", ""
+
+    def fatal_error(self, message: IrcMessage) -> HandlerResponse:
+        self.view.fatal_error(message.params)
         return "", ""
 
 
@@ -173,13 +189,14 @@ class ViewIrcClient:
         self.client = IrcBaseClient(nick, username, password)
         message_handlers = ViewMessageHandlers(self.client, view)
         self.message_handler_functions = {
-            "ERROR": self.view.fatal_error,
+            "ERROR": message_handlers.fatal_error,
             "PRIVMSG": message_handlers.privmsg,
             "JOIN": message_handlers.join,
             "PART": message_handlers.part,
             "TOPIC": message_handlers.topic,
             "QUIT": message_handlers.quit,
             "PING": message_handlers.ping,
+            "NICK": message_handlers.nick,
             replycodes.RPL_BOUNCE: message_handlers.bounce,
             replycodes.RPL_LUSERCLIENT: message_handlers.users,
             replycodes.RPL_LUSERME: message_handlers.users,

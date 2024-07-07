@@ -90,7 +90,7 @@ class IrcBaseClient:
 
         if self.password:
             self.send(IrcMessage(None, "PASS", self.password))
-        self.send(IrcMessage(None, "NICK", self.nick))
+        self.set_nick(self.nick)
         self.send(IrcMessage(None, "USER", f"{self.username} 0 * :{self.username}"))
 
         while True:
@@ -170,6 +170,9 @@ class IrcBaseClient:
 
     def oper(self, name: str, password: str) -> None:
         self.send(IrcMessage(None, "OPER", f"{name} {password}"))
+
+    def set_nick(self, nick: str) -> None:
+        self.send(IrcMessage(None, "NICK", nick))
 
     def disconnect(self, message: str = "Quitting") -> None:
         self.send(IrcMessage(None, "QUIT", message))
