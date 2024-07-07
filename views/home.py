@@ -61,6 +61,8 @@ class HomeView(ft.View):
         self.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         self.spacing = 26
+        with open("assets/text/rules.txt", "r") as f:
+            self.rules_text = f.read()
 
     def validate(self, e: ft.ControlEvent) -> None:
         self.login_button.disabled = not (
@@ -76,10 +78,8 @@ class HomeView(ft.View):
         self.page.go("/chat")
 
     def show_rules(self, e: ft.ControlEvent) -> None:
-        with open("assets/text/rules.txt", "r") as f:
-            rules_text = f.read()
         rules_dialog = ft.AlertDialog(
-            content=ft.Text(rules_text),
+            content=ft.Text(self.rules_text),
             actions=[
                 ft.TextButton(text="Ok", on_click=lambda _: self.page.close_dialog())
             ],
