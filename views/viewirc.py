@@ -277,6 +277,7 @@ class ViewIrcClient:
             replycodes.ERR_NOOPERHOST: message_handlers.no_oper_host,
             replycodes.ERR_NOTREGISTERED: message_handlers.not_registered,
             replycodes.ERR_ALREADYREGISTERED: message_handlers.already_registered,
+            replycodes.ERR_NICKNAMEINUSE: message_handlers.nickname_in_use
         }
         self.current_buf_changed = False
 

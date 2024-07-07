@@ -56,7 +56,12 @@ class ChatView(ft.View):
         self.page.on_view_pop = lambda _: self.confirm_logout()
         self.join("#main_chat")
         self.page.on_disconnect = self.logout
+        self.page.on_close = self.logout
         self.page.session.set("nickname", self.irc_client.client.nick)
+        if password := self.page.session.get("password"):
+            self.irc_client.client.send_private_message(
+                "NickServ", f"IDENTIFY {password}"
+            )
         self.page.update()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
