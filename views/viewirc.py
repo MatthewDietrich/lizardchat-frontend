@@ -3,7 +3,7 @@ from typing import TypeAlias, Self
 
 import flet as ft
 
-from irc import replycodes
+from irc import formatchars, replycodes
 from irc.client import IrcBaseClient, IrcMessage, IrcUser
 
 
@@ -30,8 +30,9 @@ class ViewMessageHandlers:
         return to, f"{message.source.nick} {content}"
 
     def join(self, message: IrcMessage) -> HandlerResponse:
+        nick = message.source.nick
         channel = message.params[1:]
-        self.client.get_names(channel)
+        self.view.user_list.add_user(channel, nick)
         return channel, f"<!> {message.source.nick} joined {channel}"
 
     def part(self, message: IrcMessage) -> HandlerResponse:
@@ -296,6 +297,15 @@ class ViewIrcClient:
             to = "<server>"
             content = f"<!> {message.command} {message.params}"
         if all([to, content]):
+            # Replace format chars for now
+            content = content.replace(formatchars.BOLD, "")
+            content = content.replace(formatchars.ITALIC, "")
+            content = content.replace(formatchars.UNDERLINE, "")
+            content = content.replace(formatchars.STRIKETHROUGH, "")
+            content = content.replace(formatchars.MONOSPACE, "")
+            content = content.replace(formatchars.COLOR, "")
+            content = content.replace(formatchars.RESET, "")
+
             if to in ("*", "irc.lizard.fun"):
                 to = "<server>"
             from_nick, *content = content.split(" ")

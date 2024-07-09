@@ -337,6 +337,15 @@ class UserList(ft.ListView):
         except KeyError:
             print("No buffer named", buffer_name)
 
+    def add_user(self, buffer_name: str, nick: str):
+        nicks = [
+            nickbox.content.value.lower()
+            for nickbox in self.buffers[buffer_name]
+            if nickbox.content.value != nick
+        ]
+        nicks.append(nick)
+        self.set_buffer_nicks(buffer_name, nicks)
+
     def set_active_buffer(self, buffer_name) -> None:
         try:
             self.controls = [self.title_text]
