@@ -73,7 +73,7 @@ class ChatView(ft.View):
         if input_value := self.chat_input.value:
             if input_value.startswith("/"):
                 command, *remaining = input_value.split(" ")
-                match command:
+                match command.lower():
                     case "/msg":
                         if len(remaining) >= 2:
                             target, *message = remaining
