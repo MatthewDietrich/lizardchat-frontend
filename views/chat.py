@@ -57,12 +57,17 @@ class ChatView(ft.View):
         self.join("#main_chat")
         self.page.on_disconnect = self.logout
         self.page.on_close = self.logout
+        self.page.on_app_lifecycle_state_change = self.state_change
         self.page.session.set("nickname", self.irc_client.client.nick)
         if password := self.page.session.get("password"):
             self.irc_client.client.send_private_message(
                 "NickServ", f"IDENTIFY {password}"
             )
         self.page.update()
+
+    def state_change(self, e: ft.AppLifecycleStateChangeEvent):
+        if e.state == ft.AppLifecycleState.DETACH:
+            self.logout()
 
     def chat_submit(self, e: ft.ControlEvent) -> None:
         if input_value := self.chat_input.value:
@@ -179,7 +184,7 @@ class ChatView(ft.View):
     def login(self) -> None:
         self.irc_client.client.connect("irc.lizard.fun", 6667)
 
-    def logout(self) -> None:
+    def logout(self, e) -> None:
         self.irc_client.client.disconnect()
 
     def add_buffer(self, buffer_name) -> None:
