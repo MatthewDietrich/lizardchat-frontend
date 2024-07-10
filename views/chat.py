@@ -14,6 +14,13 @@ class ChatView(ft.View):
         self.route = "/chat"
         self.chat_output = ChatOutput()
         self.user_list = UserList()
+        self.user_list_collapsible = ft.ExpansionTile(
+            title=ft.Text(value="Users"),
+            maintain_state=True,
+            collapsed_text_color=CustomColors.SEAFOAM,
+            text_color=CustomColors.WHITE,
+            controls=[self.user_list],
+        )
         self.chat_input = ChatInput()
         self.buffer_buttons = BufferButtons()
         self.topic_output = TopicOutput()
@@ -28,7 +35,7 @@ class ChatView(ft.View):
         self.controls = [
             ft.ResponsiveRow(
                 controls=[
-                    ft.Column(controls=[self.user_list], col={"md": 1}),
+                    ft.Column(controls=[self.user_list_collapsible]),
                     ft.Column(
                         controls=[
                             self.topic_output,
@@ -37,7 +44,6 @@ class ChatView(ft.View):
                             ),
                             self.buffer_buttons,
                         ],
-                        col={"md": 11},
                     ),
                 ],
             ),
@@ -320,8 +326,7 @@ class UserList(ft.ListView):
     def __init__(self) -> None:
         super().__init__()
         self.padding = 10
-        self.title_text = ft.Text(value="Users", weight=ft.FontWeight.BOLD)
-        self.controls = [self.title_text]
+        self.controls = []
         self.active_buffer = "<server>"
         self.buffers = {"<server>": []}
 
@@ -348,7 +353,7 @@ class UserList(ft.ListView):
 
     def set_active_buffer(self, buffer_name) -> None:
         try:
-            self.controls = [self.title_text]
+            self.controls = []
             for nick_box in self.buffers[buffer_name]:
                 self.controls.append(nick_box)
             self.active_buffer = buffer_name
