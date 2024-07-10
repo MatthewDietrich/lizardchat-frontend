@@ -44,6 +44,7 @@ class ChatView(ft.View):
                             ),
                             self.buffer_buttons,
                         ],
+                        spacing=5,
                     ),
                 ],
             ),
@@ -51,7 +52,7 @@ class ChatView(ft.View):
         ]
         self.vertical_alignment = ft.MainAxisAlignment.START
         self.horizontal_alignment = ft.CrossAxisAlignment.START
-        self.spacing = 26
+        self.spacing = 5
 
     def did_mount(self) -> None:
         super().did_mount()
