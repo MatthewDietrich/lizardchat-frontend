@@ -148,7 +148,7 @@ class ChatView(ft.View):
                     case "/nick":
                         if len(remaining) == 1:
                             nick = remaining[0]
-                        self.irc_client.client.set_nick(nick)
+                            self.irc_client.client.set_nick(nick)
                     case "/help":
                         self.add_message_to_buffer(
                             "<server>",
@@ -171,7 +171,7 @@ class ChatView(ft.View):
         self.page.update()
 
     def do_pop(self, e: ft.ControlEvent) -> None:
-        self.logout()
+        self.logout(e)
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)
