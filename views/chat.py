@@ -189,7 +189,7 @@ class ChatView(ft.View):
         self.page.show_dialog(logout_modal)
 
     def login(self) -> None:
-        self.irc_client.client.connect("irc.lizard.fun", 6667)
+        self.irc_client.client.connect("irc.lizard.fun", 6667, self.page.client_ip)
 
     def logout(self, e) -> None:
         self.irc_client.client.disconnect()

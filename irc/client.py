@@ -83,10 +83,15 @@ class IrcBaseClient:
         self.socket = None
         self.connected = False
 
-    def connect(self, hostname: str, port: int = 6667) -> None:
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((hostname, port))
-        self.socket.settimeout(10)
+    def connect(
+        self, hostname: str, port: int = 6667, source_hostname: str = ""
+    ) -> None:
+        # self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.socket.connect((hostname, port))
+        self.socket = socket.create_connection(
+            address=(hostname, port), timeout=10, source_address=(source_hostname, 0)
+        )
+        # self.socket.settimeout(10)
         self.initial_auth()
 
         while True:
