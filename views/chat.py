@@ -24,6 +24,18 @@ class ChatView(ft.View):
         self.chat_input = ChatInput()
         self.buffer_buttons = BufferButtons()
         self.topic_output = TopicOutput()
+        try:
+            with open("bannedips.txt", "r") as f:
+                self.banned_ips = f.readlines()
+        except FileNotFoundError:
+            self.banned_ips = []
+
+        try:
+            with open("connections.csv") as f:
+                self.connections = f.readlines()
+        except FileNotFoundError:
+            self.connections = []
+
         self.chat_input.on_submit = self.chat_submit
         self.active_buffer = "<server>"
         self.appbar = ft.AppBar(
@@ -70,6 +82,8 @@ class ChatView(ft.View):
             self.irc_client.client.send_private_message(
                 "NickServ", f"IDENTIFY {password}"
             )
+        with open("connections.txt", "a") as f:
+            f.writelines([f"{self.page.session.get('nickname')},{self.page.client_ip}"])
         self.page.update()
 
     def state_change(self, e: ft.AppLifecycleStateChangeEvent):
@@ -149,6 +163,10 @@ class ChatView(ft.View):
                         if len(remaining) == 1:
                             nick = remaining[0]
                             self.irc_client.client.set_nick(nick)
+                    case "/ipban":
+                        if len(remaining) == 1:
+                            nick = remaining[0]
+                            self.ip_ban(nick)
                     case "/help":
                         self.add_message_to_buffer(
                             "<server>",
@@ -251,6 +269,16 @@ class ChatView(ft.View):
             ],
         )
         self.page.show_dialog(error_modal)
+
+    def ip_ban(self, nick: str) -> None:
+        if self.irc_client.client.is_oper:
+            with open("connections.txt", "r") as f:
+                connections = [connection for connection in f.readlines()]
+            if connections:
+                nick, client_ip = connections[0].split(",")
+            with open("bannedips.txt", "w") as f:
+                f.writelines([client_ip])
+            self.irc_client.client.kill(nick, "IP Banned")
 
 
 class BufferButtons(ft.Row):

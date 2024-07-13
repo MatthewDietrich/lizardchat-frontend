@@ -9,7 +9,6 @@ def main(page: ft.Page) -> None:
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {"Cousine": "/fonts/Cousine-Regular.ttf"}
-    page.scroll = ft.ScrollMode.AUTO
 
     def route_change(e: ft.RouteChangeEvent) -> None:
         page.views.clear()

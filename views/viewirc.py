@@ -163,6 +163,7 @@ class ViewMessageHandlers:
         return "<server>", "<!> No O-lines for your host"
 
     def youre_oper(self, message: IrcMessage) -> HandlerResponse:
+        self.client.is_oper = True
         return "<server>", "<!> You are now an IRC operator"
 
     def nick(self, message: IrcMessage) -> HandlerResponse:

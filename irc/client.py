@@ -82,10 +82,10 @@ class IrcBaseClient:
         self.username = username
         self.socket = None
         self.connected = False
+        self.is_oper = False
 
     def connect(self, hostname: str, port: int = 6667) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(("192.168.10.96", 0))
         self.socket.connect((hostname, port))
         self.socket.settimeout(10)
         self.initial_auth()
@@ -175,6 +175,9 @@ class IrcBaseClient:
 
     def set_nick(self, nick: str) -> None:
         self.send(IrcMessage(None, "NICK", nick))
+
+    def kill(self, nick: str, comment: str) -> None:
+        self.send(IrcMessage(None, "KILL", f"{nick} {comment}"))
 
     def disconnect(self, message: str = "Quitting") -> None:
         self.send(IrcMessage(None, "QUIT", message))
