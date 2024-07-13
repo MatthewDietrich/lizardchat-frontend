@@ -276,9 +276,9 @@ class ChatView(ft.View):
                 connections = [connection for connection in f.readlines()]
             if connections:
                 nick, client_ip = connections[0].split(",")
-            with open("bannedips.txt", "w") as f:
-                f.writelines([client_ip])
-            self.irc_client.client.kill(nick, "IP Banned")
+                with open("bannedips.txt", "w") as f:
+                    f.writelines([client_ip])
+                self.irc_client.client.kill(nick, "IP Banned")
 
 
 class BufferButtons(ft.Row):
