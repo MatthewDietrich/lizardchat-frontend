@@ -273,7 +273,9 @@ class ChatView(ft.View):
     def ip_ban(self, nick: str) -> None:
         if self.irc_client.client.is_oper:
             with open("connections.txt", "r") as f:
-                connections = [connection for connection in f.readlines()]
+                connections = [
+                    connection for connection in f.readlines() if nick in connection
+                ]
             if connections:
                 nick, client_ip = connections[0].split(",")
                 with open("bannedips.txt", "w") as f:
